@@ -771,9 +771,12 @@ h1, h2, h3, h4, h5, h6 {
     border: 1px solid #DDD;
     border-radius: 8px;
     font-family: var(--font-body);
-    font-size: 16px; /* evita el auto-zoom de iOS Safari al enfocar */
+    font-size: 16px;
     min-height: var(--tap-min);
     transition: var(--transition);
+    -webkit-appearance: none; /* evita que iOS/Android pisen el borde y sombra personalizados */
+    appearance: none;
+    background-color: #FFF;
 }
 
 .checkout-block input:focus {
@@ -855,6 +858,21 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 0.8rem;
     display: none;
     margin-top: 0.6rem;
+}
+
+/* ════════════════════════════════════════════
+   ⚠️ VALIDACIÓN DE CAMPOS DEL CHECKOUT (borde rojo)
+   ════════════════════════════════════════════ */
+.checkout-block input.input-error,
+.checkout-block textarea.input-error {
+    border: 1px solid #D32F2F !important;
+    box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.12) !important;
+}
+
+.checkout-block input.input-error:focus,
+.checkout-block textarea.input-error:focus {
+    border-color: #D32F2F !important;
+    box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.18) !important;
 }
 
 /* ════════════════════════════════════════════
@@ -1464,6 +1482,8 @@ h1, h2, h3, h4, h5, h6 {
     resize: vertical;
     min-height: 80px;
     transition: var(--transition);
+    -webkit-appearance: none;
+    appearance: none;
 }
 
 .checkout-block textarea:focus {
@@ -1771,30 +1791,6 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ════════════════════════════════════════════════════════════════════════
    📱💻🖥 MEDIA QUERIES — RESPONSIVE TOTAL, ESTRUCTURADO POR RANGO DE ANCHO
-   Filosofía: mobile-first en pasos progresivos para que CUALQUIER ancho
-   (Android, iPhone/iPad, plegables, laptops, monitores 4K/ultrawide) reciba
-   una composición ordenada, sin saltos bruscos ni desbordes horizontales.
-
-   Rangos cubiertos:
-   ≥1920  Monitores 4K / ultra-wide
-   1600–1919  Desktop muy grande
-   1440–1599  Desktop grande
-   1200–1439  Desktop estándar
-   1025–1199  Laptop pequeña / desktop chico
-   901–1024   Tablet horizontal (iPad landscape, Android tablet)
-   769–900    Tablet vertical (iPad portrait)
-   601–768    Móvil grande / phablet (Android grandes, iPhone Pro Max portrait ancho)
-   481–600    Móvil estándar (mayoría de Android e iPhone)
-   361–480    Móvil compacto
-   ≤360       Móvil muy pequeño / plegable cerrado
-   + landscape móvil, hover:none, alta densidad de píxeles
-
-   NOTA IMPORTANTE (nav/menú): por pedido explícito, el menú de navegación
-   (Inicio/Arreglos/Destacados/Nosotras), el buscador y el botón de carrito
-   se muestran SIEMPRE en formato horizontal tipo escritorio, en todos los
-   dispositivos (Android/iOS). NO se usa menú hamburguesa/overlay en ningún
-   ancho; en pantallas angostas el header pasa a varias filas compactas
-   mantiniendo la misma estructura visual, solo que apilada y reducida.
    ════════════════════════════════════════════════════════════════════════ */
 
 /* ---------- ≥1920px: Monitores 4K / ultra-wide ---------- */
@@ -1816,9 +1812,6 @@ h1, h2, h3, h4, h5, h6 {
     .container { max-width: 1320px; }
     .catalog-grid { gap: 2.3rem; }
 }
-
-/* ---------- 1200–1439px: Desktop estándar (por defecto: 5 columnas) ---------- */
-/* Usa las reglas base ya definidas arriba (repeat(5, 1fr)). */
 
 /* ---------- 1025–1199px: Laptop pequeña / desktop chico ---------- */
 @media (max-width: 1199px) {
@@ -1850,9 +1843,6 @@ h1, h2, h3, h4, h5, h6 {
 
     .container { padding: clamp(2rem, 6vw, 3rem) 0; width: 92%; }
 
-    /* Header / navegación: SIN menú hamburguesa. Se mantiene la estructura
-       de escritorio (logo, estado, nav, buscador, carrito) pero apilada
-       en filas centradas para que quepa en cualquier ancho de forma prolija. */
     .hamburger-menu { display: none !important; }
 
     .header-container {
@@ -1887,8 +1877,6 @@ h1, h2, h3, h4, h5, h6 {
         display: inline-block;
     }
 
-    /* El buscador+carrito de escritorio se usa siempre; se oculta el bloque
-       especial que antes vivía dentro del menú móvil. */
     .mobile-search-item { display: none !important; }
     .nav-search-row-desktop {
         display: flex !important;
@@ -1911,16 +1899,13 @@ h1, h2, h3, h4, h5, h6 {
     .featured-img { height: 220px; min-height: 0; }
     .featured-info { padding: 1.5rem; align-items: center; text-align: center; }
 
-    /* Desactivar el tilt 3D en móvil (ya lo bloquea JS, esto es respaldo CSS) */
     .tilt-card { transform: none !important; }
     .card-img-wrap { height: 200px; }
 
-    /* Filtros: mejor lectura del scroll horizontal */
     .filters-arrow { display: none; }
     .filters { padding: 0.3rem 0.1rem; }
     .filter-btn { padding: 8px 16px; font-size: 0.85rem; }
 
-    /* Carrito como bottom-sheet a pantalla completa en móvil */
     .cart-overlay { align-items: flex-end; padding: 0; }
     .cart-modal {
         max-width: 100%;
@@ -2318,26 +2303,9 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ════════════════════════════════════════════
    🩹 UTILIDADES ANTI-DESBORDE GLOBALES
-   (evita scroll horizontal fantasma en cualquier
-   dispositivo, incluidos Android con barras del
-   sistema variables y iOS con notch/dynamic island)
-
-   IMPORTANTE: overflow-x:hidden va SOLO en <body>.
-   Ponerlo también en <html> bloquea el scroll vertical
-   completo en iOS Safari (y en algunos Android), porque
-   <html> es el contenedor de scroll real del navegador
-   en móvil. Por eso NO se toca aquí la etiqueta html.
    ════════════════════════════════════════════ */
 body { max-width: 100%; }
 .container, .header-container, .footer-grid, .catalog-grid,
 .stats-container, .features-grid, .steps-container {
     min-width: 0;
-}
-/* ════════════════════════════════════════════
-   ⚠️ VALIDACIÓN DE CAMPOS DEL CHECKOUT (borde rojo)
-   ════════════════════════════════════════════ */
-.checkout-block input.input-error,
-.checkout-block textarea.input-error {
-    border-color: #D32F2F;
-    box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.1);
 }
