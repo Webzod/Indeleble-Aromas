@@ -185,31 +185,30 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(typeWriter, 2500);
 
     // 6. SCROLL REVEAL & STAGGER
-    // 6. SCROLL REVEAL & STAGGER
-const revealElements = document.querySelectorAll('.reveal');
+    const revealElements = document.querySelectorAll('.reveal');
 
-const revealObserver = new IntersectionObserver((entries, observer) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.classList.add('active');
-            observer.unobserve(entry.target);
-        }
-    });
-}, { threshold: 0, rootMargin: '0px 0px -10% 0px' });
+    const revealObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('active');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0, rootMargin: '0px 0px -10% 0px' });
 
-revealElements.forEach(el => revealObserver.observe(el));
+    revealElements.forEach(el => revealObserver.observe(el));
 
-// Los stagger-item se observan uno por uno (así el catálogo largo también se revela bien)
-const staggerObserver = new IntersectionObserver((entries, observer) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.classList.add('active');
-            observer.unobserve(entry.target);
-        }
-    });
-}, { threshold: 0.1 });
+    // Los stagger-item se observan uno por uno (así el catálogo largo también se revela bien)
+    const staggerObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('active');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
 
-document.querySelectorAll('.stagger-item').forEach(item => staggerObserver.observe(item));
+    document.querySelectorAll('.stagger-item').forEach(item => staggerObserver.observe(item));
 
     // 7. CONTADORES ANIMADOS
     const counters = document.querySelectorAll('.stat-number');
@@ -310,34 +309,36 @@ document.querySelectorAll('.stagger-item').forEach(item => staggerObserver.obser
             applyFilter(f);
         });
     });
+
     // ════════════════════════════════════════════
-// ➡️ FLECHAS PARA DESPLAZAR LOS FILTROS DEL CATÁLOGO
-// ════════════════════════════════════════════
-const filtersScroll = document.getElementById('filtersScroll');
-const filtersPrevBtn = document.getElementById('filtersPrev');
-const filtersNextBtn = document.getElementById('filtersNext');
+    // ➡️ FLECHAS PARA DESPLAZAR LOS FILTROS DEL CATÁLOGO
+    // ════════════════════════════════════════════
+    const filtersScroll = document.getElementById('filtersScroll');
+    const filtersPrevBtn = document.getElementById('filtersPrev');
+    const filtersNextBtn = document.getElementById('filtersNext');
 
-if (filtersScroll && filtersPrevBtn && filtersNextBtn) {
-    const scrollAmount = 240;
+    if (filtersScroll && filtersPrevBtn && filtersNextBtn) {
+        const scrollAmount = 240;
 
-    filtersPrevBtn.addEventListener('click', () => {
-        filtersScroll.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-    });
-    filtersNextBtn.addEventListener('click', () => {
-        filtersScroll.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-    });
+        filtersPrevBtn.addEventListener('click', () => {
+            filtersScroll.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+        });
+        filtersNextBtn.addEventListener('click', () => {
+            filtersScroll.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        });
 
-    const updateFilterArrows = () => {
-        const maxScroll = filtersScroll.scrollWidth - filtersScroll.clientWidth;
-        filtersPrevBtn.disabled = filtersScroll.scrollLeft <= 2;
-        filtersNextBtn.disabled = filtersScroll.scrollLeft >= maxScroll - 2;
-    };
+        const updateFilterArrows = () => {
+            const maxScroll = filtersScroll.scrollWidth - filtersScroll.clientWidth;
+            filtersPrevBtn.disabled = filtersScroll.scrollLeft <= 2;
+            filtersNextBtn.disabled = filtersScroll.scrollLeft >= maxScroll - 2;
+        };
 
-    filtersScroll.addEventListener('scroll', updateFilterArrows);
-    window.addEventListener('resize', updateFilterArrows);
-    updateFilterArrows();
-}
-// ════════════════════════════════════════════
+        filtersScroll.addEventListener('scroll', updateFilterArrows);
+        window.addEventListener('resize', updateFilterArrows);
+        updateFilterArrows();
+    }
+
+    // ════════════════════════════════════════════
     // 🔲 VISTA DE CUADRÍCULA / LISTA (dos botones unidos)
     // ════════════════════════════════════════════
     const viewGridBtn = document.getElementById('viewGridBtn');
@@ -1148,9 +1149,17 @@ if (filtersScroll && filtersPrevBtn && filtersNextBtn) {
         return new Date(guess.getTime() + diffMin * 60000);
     };
 
-    const formatInVisitorTZ = (utcDate) => {
+    // Formatea SOLO la hora (ej: "8:00 a. m.") ya convertida a la zona horaria del visitante
+    const formatTimeOnly = (utcDate) => {
         return new Intl.DateTimeFormat('es', {
-            timeZone: visitorTZ, weekday: 'long', hour: 'numeric', minute: '2-digit', hour12: true
+            timeZone: visitorTZ, hour: 'numeric', minute: '2-digit', hour12: true
+        }).format(utcDate);
+    };
+
+    // Formatea SOLO el nombre del día (ej: "martes") ya convertido a la zona horaria del visitante
+    const formatWeekday = (utcDate) => {
+        return new Intl.DateTimeFormat('es', {
+            timeZone: visitorTZ, weekday: 'long'
         }).format(utcDate);
     };
 
@@ -1164,13 +1173,13 @@ if (filtersScroll && filtersPrevBtn && filtersNextBtn) {
         statusEl.classList.toggle('is-open', estaAbierto);
         statusEl.classList.toggle('is-closed', !estaAbierto);
 
-       if (estaAbierto) {
+        if (estaAbierto) {
+            // Abierto: siempre mostramos la hora real de cierre de HOY (nunca un rango fijo genérico)
             const closeUTC = buildStoreTimeUTC(now, CLOSE_HOUR, 0, 0);
             statusText.textContent = 'Abierto';
-            statusHours.textContent = visitorTZ === STORE_TIMEZONE
-                ? 'Lun-Sáb · 8:00 am - 5:00 pm'
-                : `Cierra: ${formatInVisitorTZ(closeUTC)}`;
+            statusHours.textContent = `Cierra hoy a las ${formatTimeOnly(closeUTC)}`;
         } else {
+            // Cerrado: calculamos cuál es el próximo día hábil real (salta domingos automáticamente)
             let dayOffset = 0;
             if (!(esDiaHabil && minutesNow < OPEN_HOUR * 60)) {
                 dayOffset = 1;
@@ -1181,10 +1190,10 @@ if (filtersScroll && filtersPrevBtn && filtersNextBtn) {
                 }
             }
             const openUTC = buildStoreTimeUTC(now, OPEN_HOUR, 0, dayOffset);
+            const esManana = dayOffset === 1;
+            const nombreDia = esManana ? 'mañana' : formatWeekday(openUTC);
             statusText.textContent = 'Cerrado';
-            statusHours.textContent = visitorTZ === STORE_TIMEZONE
-                ? `${formatInVisitorTZ(openUTC).split(',')[0]} 8:00 am - 5:00 pm`
-                : `Abre: ${formatInVisitorTZ(openUTC)}`;
+            statusHours.textContent = `Abre ${nombreDia} a las ${formatTimeOnly(openUTC)}`;
         }
     };
 
