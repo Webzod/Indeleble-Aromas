@@ -1595,9 +1595,7 @@ h1, h2, h3, h4, h5, h6 {
     height: 60px;
     aspect-ratio: 1 / 1; /* fuerza un círculo perfecto en cualquier dispositivo */
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: block; /* el centrado del ícono ahora lo hace position absolute, no flex */
     flex-shrink: 0;
     box-sizing: border-box;
     padding: 0;
@@ -1610,19 +1608,26 @@ h1, h2, h3, h4, h5, h6 {
 .wa-float:hover { transform: scale(1.1); }
 .wa-float:active { transform: scale(0.94); }
 
-/* El tamaño del ícono lo controla el CSS (no los atributos width/height del SVG),
-   así nunca se estira ni se ve deforme en ningún dispositivo o densidad de pantalla */
+/* Centrado absoluto y perfecto: sin importar el dispositivo o el tamaño del botón,
+   el ícono siempre queda anclado justo al centro geométrico del círculo */
 .wa-float svg {
     display: block;
-    flex-shrink: 0;
-    width: 54%;
-    height: 54%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 42%;
+    height: 42%;
     aspect-ratio: 1 / 1;
     pointer-events: none;
 }
 
 @media (max-width: 768px) {
-    .wa-float svg { width: 52%; height: 52%; }
+    .wa-float svg { width: 40%; height: 40%; }
+}
+
+@media (max-width: 360px) {
+    .wa-float svg { width: 38%; height: 38%; }
 }
 
 /* ════════════════════════════════════════════
