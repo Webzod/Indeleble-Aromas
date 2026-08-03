@@ -1845,48 +1845,88 @@ h1, h2, h3, h4, h5, h6 {
 
     .hamburger-menu { display: none !important; }
 
-   .header-container {
-        flex-wrap: nowrap;
+    .header-container {
+        display: flex;
+        flex-wrap: wrap;
         justify-content: space-between;
-        gap: 0.6rem;
+        align-items: center;
+        row-gap: clamp(0.6rem, 2vw, 1rem);
+        column-gap: 0.5rem;
     }
 
-    .nav-menu { width: auto; flex-shrink: 0; }
+    /* Fila 1, izquierda: logo + horario */
+    .brand-group {
+        order: 1;
+        flex: 1 1 auto;
+        min-width: 0;
+        max-width: 62%;
+        align-items: flex-start;
+    }
+
+    .logo {
+        white-space: normal;
+        line-height: 1.15;
+    }
+
+    .store-status {
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    /* Fila 1, derecha: buscador + carrito */
+    .mobile-search-item { display: none !important; }
+
+    .nav-search-row-desktop {
+        order: 2;
+        display: flex !important;
+        flex: 0 1 auto;
+        min-width: 0;
+        max-width: 38%;
+        justify-content: flex-end;
+        gap: 0.4rem;
+    }
+    .nav-search-row-desktop .nav-search {
+        flex: 1 1 auto;
+        min-width: 0;
+        max-width: clamp(80px, 16vw, 160px);
+    }
+    .nav-search-row-desktop .nav-search-input {
+        width: 100%;
+        min-width: 0;
+    }
+    .nav-search-row-desktop .nav-cart-btn {
+        flex-shrink: 0;
+    }
+
+    /* Fila 2: menú Inicio...Nosotras, centrado y de ancho completo */
+    .nav-menu {
+        order: 3;
+        flex: 1 1 100%;
+        width: 100%;
+    }
 
     .nav-list {
         display: flex !important;
         position: static;
-        width: auto;
+        width: 100%;
         height: auto;
         background: transparent;
         padding: 0;
         flex-direction: row;
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
         justify-content: center;
         align-items: center;
         overflow: visible;
-        gap: clamp(0.5rem, 1.5vw, 1rem);
+        gap: clamp(0.5rem, 1.5vw, 1.2rem) clamp(0.8rem, 3vw, 1.6rem);
         z-index: auto;
     }
     .nav-list .nav-link {
-        font-size: clamp(0.7rem, 1.8vw, 0.88rem);
+        font-size: clamp(0.78rem, 2vw, 0.92rem);
         padding: 0.2rem 0;
         min-height: auto;
         display: inline-block;
         white-space: nowrap;
     }
-
-    .mobile-search-item { display: none !important; }
-    .nav-search-row-desktop {
-        display: flex !important;
-        width: auto;
-        flex-shrink: 0;
-        justify-content: flex-end;
-    }
-    .nav-search-row-desktop .nav-search { max-width: clamp(90px, 20vw, 200px); }
-    .nav-search-row-desktop .nav-search-input { width: 100%; }
-
-    .brand-group { width: auto; flex-shrink: 1; min-width: 0; }
 
     .hero { min-height: 100dvh; min-height: 100vh; }
     .hero-buttons { flex-direction: column; width: 100%; }
