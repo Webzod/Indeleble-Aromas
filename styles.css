@@ -2277,8 +2277,14 @@ h1, h2, h3, h4, h5, h6 {
    (evita scroll horizontal fantasma en cualquier
    dispositivo, incluidos Android con barras del
    sistema variables y iOS con notch/dynamic island)
+
+   IMPORTANTE: overflow-x:hidden va SOLO en <body>.
+   Ponerlo también en <html> bloquea el scroll vertical
+   completo en iOS Safari (y en algunos Android), porque
+   <html> es el contenedor de scroll real del navegador
+   en móvil. Por eso NO se toca aquí la etiqueta html.
    ════════════════════════════════════════════ */
-html, body { max-width: 100%; overflow-x: hidden; }
+body { max-width: 100%; }
 .container, .header-container, .footer-grid, .catalog-grid,
 .stats-container, .features-grid, .steps-container {
     min-width: 0;
