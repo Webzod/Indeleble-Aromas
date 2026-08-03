@@ -1864,13 +1864,13 @@ h1, h2, h3, h4, h5, h6 {
         column-gap: 0.5rem;
     }
 
-    /* Fila 1, izquierda: logo + horario */
+   /* Fila 1, izquierda: logo + horario */
     .brand-group {
         order: 1;
         flex: 1 1 auto;
         min-width: 0;
         max-width: 62%;
-        align-items: flex-start;
+        align-items: center;
     }
 
     .logo {
@@ -2030,7 +2030,6 @@ h1, h2, h3, h4, h5, h6 {
     .card-img-wrap { height: 150px; }
     .stats-container { grid-template-columns: 1fr 1fr; gap: 0.8rem; }
     .logo { font-size: 1.05rem; }
-    .logo-icon { display: none; }
     .btn { width: 100%; }
     .hero-buttons .btn { padding: 0.85rem 1.2rem; }
     .cart-item-qty { gap: 0.35rem; }
