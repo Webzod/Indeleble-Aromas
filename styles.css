@@ -1754,6 +1754,7 @@ h1, h2, h3, h4, h5, h6 {
     border: 1px solid rgba(255,255,255,0.2);
     font-size: 0.75rem;
     font-weight: 500;
+    line-height: 1;
     color: #FFF;
     transition: var(--transition);
     white-space: nowrap;
@@ -1767,15 +1768,24 @@ h1, h2, h3, h4, h5, h6 {
     flex-shrink: 0;
 }
 
+.store-status-icon svg {
+    display: block;
+}
+
 .store-status-text {
     font-weight: 600;
+    line-height: 1;
     transition: color 0.3s;
 }
 
-.store-status-sep { opacity: 0.5; }
+.store-status-sep {
+    opacity: 0.5;
+    line-height: 1;
+}
 
 .store-status-hours {
     opacity: 0.85;
+    line-height: 1;
     white-space: nowrap;
 }
 
@@ -2009,8 +2019,8 @@ h1, h2, h3, h4, h5, h6 {
     .nav-list { gap: 0.5rem 0.8rem; }
     .nav-list .nav-link { font-size: 0.78rem; }
 
-    .store-status { font-size: 0.68rem; gap: 4px; padding: 3px 10px; }
-    .store-status-hours { display: none; }
+    .store-status { font-size: 0.62rem; gap: 4px; padding: 3px 10px; max-width: 100%; }
+    .store-status-hours { font-size: 0.58rem; }
 }
 
 /* ---------- Móviles muy pequeños (≤360px, p.ej. Galaxy Fold cerrado) ---------- */
@@ -2033,8 +2043,8 @@ h1, h2, h3, h4, h5, h6 {
     .sort-toggle-btn span#sortLabel { display: none; }
     .view-toggle-seg { width: 34px; height: 34px; }
 
-    .store-status { font-size: 0.62rem; padding: 3px 8px; gap: 3px; }
-    .store-status-hours { font-size: 0.6rem; }
+    .store-status { font-size: 0.56rem; padding: 3px 8px; gap: 3px; }
+    .store-status-hours { font-size: 0.53rem; }
 }
 
 /* ---------- Extra angosto (≤320px, iPhone 5/SE 1ª gen y similares) ---------- */
