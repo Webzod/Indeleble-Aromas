@@ -1098,8 +1098,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
 // ════════════════════════════════════════════
 // 🕐 21. ESTADO DE ATENCIÓN EN TIEMPO REAL (Abierto/Cerrado) + conversión a hora local del visitante
+// ════════════════════════════════════════════
+//
+// ✅ CORREGIDO:
+//   - Antes dependía de una API externa (timeapi.io) y del texto "2:30 PM" parseado
+//     con .split(':'), lo cual podía fallar silenciosamente en varios navegadores/
+//     dispositivos y dejaba pegado el texto por defecto del HTML ("Abierto",
+//     "8:00 am - 5:00 pm") sin importar la hora real. Por eso se veía "Abierto"
+//     todo el tiempo, incluso de noche.
+//   - Ahora se calcula todo con la hora del propio dispositivo + Intl.DateTimeFormat,
+//     sin llamadas de red y sin parseos frágiles, con un try/catch de seguridad.
+//   - La hora de apertura/cierre SIEMPRE se calcula con la zona horaria de la
+//     tienda (Venezuela, America/Caracas) y luego se muestra convertida
+//     automáticamente a la zona horaria de quien visita la página — así, alguien
+//     en Colombia (UTC-5) ve la hora correcta con 1 hora de diferencia respecto a
+//     Venezuela (UTC-4), y lo mismo para cualquier otro país, sin tocar nada más.
 // ════════════════════════════════════════════
 (function initStoreStatus() {
     const statusEl = document.getElementById('storeStatus');
@@ -1107,46 +1123,71 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusHours = document.getElementById('storeStatusHours');
     if (!statusEl || !statusText || !statusHours) return;
 
-    const OPEN_HOUR = 8;
-    const CLOSE_HOUR = 17;
-    const STORE_TIMEZONE = 'America/Caracas';
+    const OPEN_HOUR = 8;   // 8:00 am, hora de la tienda
+    const CLOSE_HOUR = 17; // 5:00 pm, hora de la tienda
+    const STORE_TIMEZONE = 'America/Caracas'; // Zona horaria real de la tienda (Venezuela, UTC-4)
 
-    let serverOffsetMs = 0;
-    const getAccurateNow = () => new Date(Date.now() + serverOffsetMs);
+    // Zona horaria del visitante, detectada automáticamente por el navegador
+    // (funciona para cualquier país: Colombia UTC-5, Venezuela UTC-4, México, España, etc.)
+    let visitorTZ = STORE_TIMEZONE;
+    try {
+        visitorTZ = Intl.DateTimeFormat().resolvedOptions().timeZone || STORE_TIMEZONE;
+    } catch (err) {
+        visitorTZ = STORE_TIMEZONE;
+    }
 
-    const fetchServerTime = async () => {
-        try {
-            const res = await fetch(`https://timeapi.io/api/time/current/zone?timeZone=${encodeURIComponent(STORE_TIMEZONE)}`);
-            if (!res.ok) throw new Error('timeapi failed');
-            const data = await res.json();
-            serverOffsetMs = new Date(data.dateTime).getTime() - Date.now();
-        } catch (err) {
-            serverOffsetMs = 0;
-        }
+    // ── Offset (en minutos) entre una zona horaria y UTC, calculado "en vivo" para
+    //    la fecha dada. Así se ajusta solo si algún país cambia sus reglas de horario.
+    const getTZOffsetMinutes = (date, timeZone) => {
+        const dtf = new Intl.DateTimeFormat('en-US', {
+            timeZone,
+            hourCycle: 'h23',
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
+        const parts = {};
+        dtf.formatToParts(date).forEach(p => {
+            if (p.type !== 'literal') parts[p.type] = parseInt(p.value, 10);
+        });
+        const hourFixed = parts.hour === 24 ? 0 : parts.hour;
+        const asUTC = Date.UTC(parts.year, parts.month - 1, parts.day, hourFixed, parts.minute, parts.second);
+        return (asUTC - date.getTime()) / 60000;
     };
 
-    // Zona horaria del visitante, detectada automáticamente por el navegador (funciona para cualquier país)
-    const visitorTZ = Intl.DateTimeFormat().resolvedOptions().timeZone || STORE_TIMEZONE;
-
+    // ── Día de la semana (0=Dom...6=Sáb), hora y minuto ACTUALES de la tienda
     const getStoreLocalParts = (date) => {
         const fmt = new Intl.DateTimeFormat('en-US', {
-            timeZone: STORE_TIMEZONE, weekday: 'short', hour: 'numeric', minute: 'numeric', hour12: false
+            timeZone: STORE_TIMEZONE,
+            hourCycle: 'h23',
+            weekday: 'short', hour: '2-digit', minute: '2-digit'
         });
-        const parts = fmt.formatToParts(date);
-        const get = (t) => parts.find(p => p.type === t)?.value;
+        const parts = {};
+        fmt.formatToParts(date).forEach(p => {
+            if (p.type !== 'literal') parts[p.type] = p.value;
+        });
         const dayMap = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
-        return { day: dayMap[get('weekday')], hour: parseInt(get('hour'), 10), minute: parseInt(get('minute'), 10) };
+        let hour = parseInt(parts.hour, 10);
+        if (hour === 24) hour = 0;
+        return { day: dayMap[parts.weekday], hour, minute: parseInt(parts.minute, 10) };
     };
 
+    // ── Instante UTC real que corresponde a "hour:minute" del día de la tienda
+    //    (hoy + dayOffset días), sin depender de parsear strings con AM/PM.
     const buildStoreTimeUTC = (referenceDate, hour, minute, dayOffset = 0) => {
-        // Toma la fecha de la tienda como referencia y arma un instante UTC que, visto en STORE_TIMEZONE, marque hour:minute
-        const storeDateStr = new Intl.DateTimeFormat('en-CA', { timeZone: STORE_TIMEZONE }).format(referenceDate);
-        const [y, m, d] = storeDateStr.split('-').map(Number);
-        const guess = new Date(Date.UTC(y, m - 1, d + dayOffset, hour, minute, 0));
-        const check = new Intl.DateTimeFormat('en-US', { timeZone: STORE_TIMEZONE, hour12: false, hour: '2-digit', minute: '2-digit' }).format(guess);
-        const [ch, cm] = check.split(':').map(Number);
-        const diffMin = (hour * 60 + minute) - (ch * 60 + cm);
-        return new Date(guess.getTime() + diffMin * 60000);
+        const dateFmt = new Intl.DateTimeFormat('en-CA', {
+            timeZone: STORE_TIMEZONE, year: 'numeric', month: '2-digit', day: '2-digit'
+        });
+        const dp = {};
+        dateFmt.formatToParts(referenceDate).forEach(p => {
+            if (p.type !== 'literal') dp[p.type] = parseInt(p.value, 10);
+        });
+
+        // "Instante ingenuo": mismos números Y-M-D H:M pero tratados como si fueran UTC
+        const naiveUTC = Date.UTC(dp.year, dp.month - 1, dp.day + dayOffset, hour, minute, 0);
+
+        // Corregimos por el offset real de la tienda en esa fecha
+        const offsetMin = getTZOffsetMinutes(new Date(naiveUTC), STORE_TIMEZONE);
+        return new Date(naiveUTC - offsetMin * 60000);
     };
 
     // Formatea SOLO la hora (ej: "8:00 a. m.") ya convertida a la zona horaria del visitante
@@ -1164,40 +1205,48 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const updateStoreStatus = () => {
-        const now = getAccurateNow();
-        const { day, hour, minute } = getStoreLocalParts(now);
-        const minutesNow = hour * 60 + minute;
-        const esDiaHabil = day >= 1 && day <= 6; // Lunes a Sábado
-        const estaAbierto = esDiaHabil && minutesNow >= OPEN_HOUR * 60 && minutesNow < CLOSE_HOUR * 60;
+        try {
+            const now = new Date();
+            const { day, hour, minute } = getStoreLocalParts(now);
+            const minutesNow = hour * 60 + minute;
+            const esDiaHabil = day >= 1 && day <= 6; // Lunes a Sábado
+            const estaAbierto = esDiaHabil && minutesNow >= OPEN_HOUR * 60 && minutesNow < CLOSE_HOUR * 60;
 
-        statusEl.classList.toggle('is-open', estaAbierto);
-        statusEl.classList.toggle('is-closed', !estaAbierto);
+            statusEl.classList.toggle('is-open', estaAbierto);
+            statusEl.classList.toggle('is-closed', !estaAbierto);
 
-        if (estaAbierto) {
-            // Abierto: siempre mostramos la hora real de cierre de HOY (nunca un rango fijo genérico)
-            const closeUTC = buildStoreTimeUTC(now, CLOSE_HOUR, 0, 0);
-            statusText.textContent = 'Abierto';
-            statusHours.textContent = `Cierra hoy a las ${formatTimeOnly(closeUTC)}`;
-        } else {
-            // Cerrado: calculamos cuál es el próximo día hábil real (salta domingos automáticamente)
-            let dayOffset = 0;
-            if (!(esDiaHabil && minutesNow < OPEN_HOUR * 60)) {
-                dayOffset = 1;
-                while (true) {
-                    const proximoDia = (day + dayOffset) % 7;
-                    if (proximoDia >= 1 && proximoDia <= 6) break; // Lunes a Sábado
-                    dayOffset++;
+            if (estaAbierto) {
+                // Abierto: siempre mostramos la hora real de cierre de HOY
+                const closeUTC = buildStoreTimeUTC(now, CLOSE_HOUR, 0, 0);
+                statusText.textContent = 'Abierto';
+                statusHours.textContent = `Cierra hoy a las ${formatTimeOnly(closeUTC)}`;
+            } else {
+                // Cerrado: calculamos el próximo día hábil real (salta domingos automáticamente)
+                let dayOffset = 0;
+                if (!(esDiaHabil && minutesNow < OPEN_HOUR * 60)) {
+                    dayOffset = 1;
+                    while (true) {
+                        const proximoDia = (day + dayOffset) % 7;
+                        if (proximoDia >= 1 && proximoDia <= 6) break; // Lunes a Sábado
+                        dayOffset++;
+                    }
                 }
+                const openUTC = buildStoreTimeUTC(now, OPEN_HOUR, 0, dayOffset);
+                const esManana = dayOffset === 1;
+                const nombreDia = esManana ? 'mañana' : formatWeekday(openUTC);
+                statusText.textContent = 'Cerrado';
+                statusHours.textContent = `Abre ${nombreDia} a las ${formatTimeOnly(openUTC)}`;
             }
-            const openUTC = buildStoreTimeUTC(now, OPEN_HOUR, 0, dayOffset);
-            const esManana = dayOffset === 1;
-            const nombreDia = esManana ? 'mañana' : formatWeekday(openUTC);
-            statusText.textContent = 'Cerrado';
-            statusHours.textContent = `Abre ${nombreDia} a las ${formatTimeOnly(openUTC)}`;
+        } catch (err) {
+            // Si algo falla, NO dejamos el texto por defecto engañoso del HTML:
+            // mostramos un estado neutro en vez de decir "Abierto" a ciegas.
+            statusEl.classList.remove('is-open', 'is-closed');
+            statusText.textContent = 'Horario';
+            statusHours.textContent = '8:00 am - 5:00 pm';
         }
     };
 
-    fetchServerTime().then(updateStoreStatus);
-    setInterval(() => fetchServerTime().then(updateStoreStatus), 10 * 60 * 1000);
+    // Primera actualización inmediata (ya no espera ninguna llamada de red)
+    updateStoreStatus();
     setInterval(updateStoreStatus, 30000);
 })();
