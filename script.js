@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ════════════════════════════════════════════
     // 🌎 0. DETECCIÓN DE DISPOSITIVO/SO PARA EL SELECT DE PAÍSES
-    //    - Celular / Mac / Linux / Windows 11 (Chrome-Edge) → bandera emoji
+    //    - Celular / Mac / Linux / Windows 11 (Chrome-Edge) → bandera + código (+58, +57, etc.)
     //    - Windows 10, o Windows sin soporte de detección fina (Firefox) → texto "Abr +Código País"
     // ════════════════════════════════════════════
     (function setupCountrySelectDisplay() {
@@ -21,7 +21,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const renderAsFlag = () => {
             options.forEach(opt => {
-                opt.textContent = opt.getAttribute('data-flag');
+                const [code] = opt.value.split('|');
+                const flag = opt.getAttribute('data-flag');
+                opt.textContent = `${flag} ${code}`;
             });
         };
 
@@ -39,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const isMac = /Macintosh|Mac OS X/i.test(ua);
         const isLinux = /Linux/i.test(ua) && !isMobile;
 
-        // Celular, Mac o Linux: siempre bandera (traen fuente de emoji completa)
+        // Celular, Mac o Linux: siempre bandera + código (traen fuente de emoji completa)
         if (isMobile || isMac || isLinux) {
             renderAsFlag();
             return;
@@ -60,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (info.platform === 'Windows' && info.platformVersion) {
                             const majorVersion = parseInt(info.platformVersion.split('.')[0], 10);
                             if (majorVersion >= 13) {
-                                renderAsFlag(); // Es Windows 11 → mostrar bandera
+                                renderAsFlag(); // Es Windows 11 → mostrar bandera + código
                             }
                             // Si es menor a 13 (Windows 10), se queda en modo texto.
                         }
