@@ -722,6 +722,80 @@ if (filtersScroll && filtersPrevBtn && filtersNextBtn) {
         });
     });
 
+    // Longitud mínima/máxima de celular (sin código de país) esperada por país,
+    // para validar de forma más precisa según el indicativo elegido.
+    const PHONE_LENGTH_BY_CODE = {
+        '+57': [10, 10],  // Colombia
+        '+52': [10, 10],  // México
+        '+54': [10, 11],  // Argentina
+        '+51': [9, 9],    // Perú
+        '+58': [10, 10],  // Venezuela
+        '+56': [9, 9],    // Chile
+        '+502': [8, 8],   // Guatemala
+        '+593': [9, 9],   // Ecuador
+        '+591': [8, 8],   // Bolivia
+        '+1': [10, 10],   // Rep. Dominicana / EEUU
+        '+504': [8, 8],   // Honduras
+        '+595': [9, 9],   // Paraguay
+        '+598': [8, 9],   // Uruguay
+        '+503': [8, 8],   // El Salvador
+        '+505': [8, 8],   // Nicaragua
+        '+507': [7, 8],   // Panamá
+        '+506': [8, 8],   // Costa Rica
+        '+55': [10, 11],  // Brasil
+        '+34': [9, 9],    // España
+        '+351': [9, 9],   // Portugal
+        '+244': [9, 9],   // Angola
+        '+258': [9, 9],   // Mozambique
+        '+66': [9, 9],    // Tailandia
+        '+84': [9, 10],   // Vietnam
+        '+60': [9, 10],   // Malasia
+        '+62': [9, 12],   // Indonesia
+        '+63': [10, 10],  // Filipinas
+    };
+
+    const isValidPhoneForCountry = (digits, countryCode) => {
+        const range = PHONE_LENGTH_BY_CODE[countryCode];
+        if (!range) return digits.length >= 7; // fallback genérico
+        const [min, max] = range;
+        return digits.length >= min && digits.length <= max;
+    };
+
+    const setFieldError = (inputEl, errorEl, hasError) => {
+        if (inputEl) inputEl.classList.toggle('input-error', hasError);
+        if (errorEl) errorEl.style.display = hasError ? 'block' : 'none';
+    };
+
+    // Limpia el borde rojo apenas la persona empieza a corregir el campo
+    if (checkoutNombre) {
+        checkoutNombre.addEventListener('input', () => setFieldError(checkoutNombre, checkoutNombreError, checkoutNombre.value.trim().length < 3 ? checkoutNombre.classList.contains('input-error') : false));
+    }
+    if (checkoutCelular) {
+        checkoutCelular.addEventListener('input', () => {
+            if (checkoutCelular.classList.contains('input-error')) {
+                const digits = checkoutCelular.value.replace(/\D/g, '');
+                const [code] = checkoutCountryCode.value.split('|');
+                if (isValidPhoneForCountry(digits, code)) setFieldError(checkoutCelular, checkoutCelularError, false);
+            }
+        });
+    }
+    if (checkoutDireccion) {
+        checkoutDireccion.addEventListener('input', () => {
+            if (checkoutDireccion.classList.contains('input-error') && checkoutDireccion.value.trim().length >= 5) {
+                setFieldError(checkoutDireccion, checkoutDireccionError, false);
+            }
+        });
+    }
+    if (checkoutCountryCode) {
+        checkoutCountryCode.addEventListener('change', () => {
+            if (checkoutCelular.classList.contains('input-error')) {
+                const digits = checkoutCelular.value.replace(/\D/g, '');
+                const [code] = checkoutCountryCode.value.split('|');
+                setFieldError(checkoutCelular, checkoutCelularError, !isValidPhoneForCountry(digits, code));
+            }
+        });
+    }
+
     // Envío final del pedido (WhatsApp) con todos los datos de contacto
     if (cartCheckoutBtn) {
         cartCheckoutBtn.addEventListener('click', (e) => {
@@ -731,23 +805,30 @@ if (filtersScroll && filtersPrevBtn && filtersNextBtn) {
             [deliveryError, checkoutNombreError, checkoutCelularError, checkoutDireccionError].forEach(el => {
                 if (el) el.style.display = 'none';
             });
+            [checkoutNombre, checkoutCelular, checkoutDireccion].forEach(el => {
+                if (el) el.classList.remove('input-error');
+            });
 
             if (!selectedDelivery) {
                 isValid = false;
                 if (deliveryError) deliveryError.style.display = 'block';
             }
+
             if (checkoutNombre.value.trim().length < 3) {
                 isValid = false;
-                if (checkoutNombreError) checkoutNombreError.style.display = 'block';
+                setFieldError(checkoutNombre, checkoutNombreError, true);
             }
+
             const phoneDigits = checkoutCelular.value.replace(/\D/g, '');
-            if (phoneDigits.length < 7) {
+            const [countryCode] = checkoutCountryCode.value.split('|');
+            if (!isValidPhoneForCountry(phoneDigits, countryCode)) {
                 isValid = false;
-                if (checkoutCelularError) checkoutCelularError.style.display = 'block';
+                setFieldError(checkoutCelular, checkoutCelularError, true);
             }
+
             if (selectedDelivery === 'Domicilio' && checkoutDireccion.value.trim().length < 5) {
                 isValid = false;
-                if (checkoutDireccionError) checkoutDireccionError.style.display = 'block';
+                setFieldError(checkoutDireccion, checkoutDireccionError, true);
             }
 
             if (!isValid) return;
