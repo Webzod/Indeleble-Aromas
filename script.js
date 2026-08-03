@@ -1164,11 +1164,11 @@ if (filtersScroll && filtersPrevBtn && filtersNextBtn) {
         statusEl.classList.toggle('is-open', estaAbierto);
         statusEl.classList.toggle('is-closed', !estaAbierto);
 
-        if (estaAbierto) {
+       if (estaAbierto) {
             const closeUTC = buildStoreTimeUTC(now, CLOSE_HOUR, 0, 0);
             statusText.textContent = 'Abierto';
             statusHours.textContent = visitorTZ === STORE_TIMEZONE
-                ? '8:00 am - 5:00 pm'
+                ? 'Lun-Sáb · 8:00 am - 5:00 pm'
                 : `Cierra: ${formatInVisitorTZ(closeUTC)}`;
         } else {
             let dayOffset = 0;
