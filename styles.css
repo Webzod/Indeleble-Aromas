@@ -327,9 +327,9 @@ h1, h2, h3, h4, h5, h6 {
 /* Fila 1, izquierda: logo + horario */
     .brand-group {
         order: 1;
-        flex: 0 1 auto;
+        flex: 1 1 auto;
         min-width: 0;
-        max-width: 42%;
+        max-width: 44%;
         align-items: center;
         gap: 0.3rem;
     }
@@ -1890,17 +1890,17 @@ h1, h2, h3, h4, h5, h6 {
     /* Fila 1, derecha: buscador + carrito */
     .mobile-search-item { display: none !important; }
 
-    .nav-search-row-desktop {
+   .nav-search-row-desktop {
         order: 2;
         display: flex !important;
-        flex: 0 1 auto;
+        flex: 1 1 auto;
         min-width: 0;
-        max-width: 50%;
+        max-width: 54%;
         justify-content: flex-end;
         align-items: center;
         gap: clamp(0.3rem, 1.5vw, 0.5rem);
     }
-    
+
     .nav-search-row-desktop .nav-search {
         flex: 1 1 auto;
         min-width: 60px;
